@@ -1,15 +1,10 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from pymongo import MongoClient
-from bson import ObjectId
 from datetime import datetime
 import os
 
-from flask_cors import CORS  # ADD THIS with other imports at the top
 app = Flask(__name__)
-CORS(app)  # ADD THIS right after
-
-# Allow your Vercel frontend to talk to this API
 CORS(app)
 
 MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb+srv://testuser:testpass123@cluster0.inkdjrq.mongodb.net/dcn_network?retryWrites=true&w=majority&appName=Cluster0')
