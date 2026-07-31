@@ -101,6 +101,33 @@ def waitlist_emails():
     emails = list(db.waitlist.find({}, {"email": 1, "created_at": 1}).sort("created_at", -1))
     return jsonify([serialize_doc(e) for e in emails])
 
+@app.route('/api/purchase', methods=['POST'])
+def purchase_data():
+    data = request.get_json()
+    plan_id = data.get('plan_id')
+    plan_name = data.get('plan_name')
+    amount = data.get('amount')
+
+    if not plan_id or not plan_name or amount is None:
+        return jsonify({'error': 'Missing plan details'}), 400
+
+    purchase_record = {
+        'plan_id': plan_id,
+        'plan_name': plan_name,
+        'amount': amount,
+        'status': 'completed',
+        'timestamp': datetime.utcnow().isoformat()
+    }
+
+    # Optional: Save to MongoDB if you have a purchases collection
+    # db.purchases.insert_one(purchase_record)
+
+    return jsonify({
+        'success': True,
+        'message': f'Purchased {plan_name} successfully',
+        'purchase': purchase_record
+    }), 200
+
 if __name__ == '__main__':
     print("🚀 DCN API v2 starting...")
     print(f"📊 SIMs in DB: {db.sims.count_documents({})}")
