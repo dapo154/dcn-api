@@ -107,29 +107,28 @@ def purchase_data():
     plan_id = data.get('plan_id')
     plan_name = data.get('plan_name')
     amount = data.get('amount')
+    phone_number = data.get('phone_number')
 
     if not plan_id or not plan_name or amount is None:
         return jsonify({'error': 'Missing plan details'}), 400
+
+    if not phone_number:
+        return jsonify({'error': 'Phone number is required'}), 400
 
     purchase_record = {
         'plan_id': plan_id,
         'plan_name': plan_name,
         'amount': amount,
+        'phone_number': phone_number,
         'status': 'completed',
         'timestamp': datetime.utcnow().isoformat()
     }
 
-    # Optional: Save to MongoDB if you have a purchases collection
-    # db.purchases.insert_one(purchase_record)
+    # Save to MongoDB
+    db.purchases.insert_one(purchase_record)
 
     return jsonify({
         'success': True,
-        'message': f'Purchased {plan_name} successfully',
-        'purchase': purchase_record
+        'message': f'Purchased {plan_name} for {phone_number}',
+        'purchase': serialize_doc(purchase_record)
     }), 200
-
-if __name__ == '__main__':
-    print("🚀 DCN API v2 starting...")
-    print(f"📊 SIMs in DB: {db.sims.count_documents({})}")
-    print(f"📧 Waitlist entries: {db.waitlist.count_documents({})}")
-    app.run(host='0.0.0.0', port=5000, debug=True)
