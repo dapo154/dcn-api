@@ -3,6 +3,7 @@ from flask_cors import CORS
 from pymongo import MongoClient
 from datetime import datetime
 import os
+import requests
 
 app = Flask(__name__)
 CORS(app)
@@ -11,15 +12,43 @@ MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb+srv://testuser:testpass123@clust
 client = MongoClient(MONGODB_URI)
 db = client.dcn_network
 
+# Termii Config
+TERMII_API_KEY = os.getenv('TERMII_API_KEY', 'tlv_N710EtkdoNR6qe9I_1o1IduyECaX4tcZOPYoBcCllB4')
+TERMII_SENDER_ID = os.getenv('TERMII_SENDER_ID', 'DCN')
+
 def serialize_doc(doc):
     doc['_id'] = str(doc['_id'])
     return doc
+
+def send_sms(to, message):
+    # Format number for Termii (remove leading 0, add 234)
+    formatted = to
+    if formatted.startswith('0'):
+        formatted = '234' + formatted[1:]
+    elif formatted.startswith('+'):
+        formatted = formatted[1:]
+    
+    url = "https://api.ng.termii.com/api/sms/send"
+    payload = {
+        "to": formatted,
+        "from": TERMII_SENDER_ID,
+        "sms": message,
+        "type": "plain",
+        "channel": "generic",
+        "api_key": TERMII_API_KEY,
+    }
+    try:
+        response = requests.post(url, json=payload, timeout=10)
+        return response.json()
+    except Exception as e:
+        print(f"SMS failed: {e}")
+        return {"error": str(e)}
 
 @app.route('/')
 def home():
     return jsonify({
         "message": "DCN Network API",
-        "version": "2.0.0",
+        "version": "2.1.0",
         "status": "operational",
         "timestamp": datetime.now().isoformat()
     })
@@ -111,7 +140,6 @@ def purchase_data():
 
     if not plan_id or not plan_name or amount is None:
         return jsonify({'error': 'Missing plan details'}), 400
-
     if not phone_number:
         return jsonify({'error': 'Phone number is required'}), 400
 
@@ -124,11 +152,20 @@ def purchase_data():
         'timestamp': datetime.utcnow().isoformat()
     }
 
-    # Save to MongoDB
     db.purchases.insert_one(purchase_record)
+
+    # Send SMS receipt
+    sms_message = f"DCN: You purchased {plan_name} ({plan_id}) for N{amount}. Data will be loaded to {phone_number} shortly. Thank you!"
+    sms_result = send_sms(phone_number, sms_message)
 
     return jsonify({
         'success': True,
         'message': f'Purchased {plan_name} for {phone_number}',
-        'purchase': serialize_doc(purchase_record)
+        'purchase': serialize_doc(purchase_record),
+        'sms_status': sms_result
     }), 200
+
+@app.route('/api/purchases', methods=['GET'])
+def get_purchases():
+    purchases = list(db.purchases.find().sort("timestamp", -1).limit(50))
+    return jsonify([serialize_doc(p) for p in purchases])
