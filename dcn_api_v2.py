@@ -14,7 +14,7 @@ db = client.dcn_network
 
 # Termii Config
 TERMII_API_KEY = os.getenv('TERMII_API_KEY', 'tlv_N710EtkdoNR6qe9I_1o1IduyECaX4tcZOPYoBcCllB4')
-TERMII_SENDER_ID = os.getenv('TERMII_SENDER_ID', 'DCN')
+TERMII_SENDER_ID = os.getenv('TERMII_SENDER_ID', 'Termii')
 
 def serialize_doc(doc):
     doc['_id'] = str(doc['_id'])
