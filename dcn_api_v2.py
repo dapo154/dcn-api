@@ -13,7 +13,7 @@ client = MongoClient(MONGODB_URI)
 db = client.dcn_network
 
 # Termii Config
-TERMII_API_KEY = os.getenv('TERMII_API_KEY', 'tlv_hXPsx6BF8A9f0IbvYqhzYYmlnrxmfzmw1OggyCIqhZI')
+TERMII_API_KEY = os.getenv('TERMII_API_KEY')
 TERMII_SENDER_ID = os.getenv('TERMII_SENDER_ID', 'Termii')
 
 def serialize_doc(doc):
